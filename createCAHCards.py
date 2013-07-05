@@ -183,90 +183,91 @@ def createCell(text, roffset, coffset, w, h, marginl, margint, isBlack):
     return
 
 
-# Main
-colstotal = get_multipl(WIDTH, CARDWIDTH, MARGINS[0], MARGINS[1])
-rowstotal = get_multipl(HEIGHT, CARDHEIGHT, MARGINS[2], MARGINS[3])
+def main():
+    colstotal = get_multipl(WIDTH, CARDWIDTH, MARGINS[0], MARGINS[1])
+    rowstotal = get_multipl(HEIGHT, CARDHEIGHT, MARGINS[2], MARGINS[3])
 
-# create a new document
-t = scribus.newDocument(
-    (WIDTH, HEIGHT),
-    MARGINS,
-    scribus.PORTRAIT,
-    1,
-    scribus.UNIT_MILLIMETERS,
-    scribus.FACINGPAGES,
-    scribus.FIRSTPAGERIGHT,
-    1,
-)
-cr = 1
-cc = 1
-nol = 0
+    # create a new document
+    t = scribus.newDocument(
+        (WIDTH, HEIGHT),
+        MARGINS,
+        scribus.PORTRAIT,
+        1,
+        scribus.UNIT_MILLIMETERS,
+        scribus.FACINGPAGES,
+        scribus.FIRSTPAGERIGHT,
+        1,
+    )
+    cr = 1
+    cc = 1
+    nol = 0
 
-# ask for CSV infos
-tstr = scribus.valueDialog(
-    'Cvs Delimiter, Quote and Column to process',
-    'Type 1 delimiter, 1 quote character '
-    'and the column number (Clear for default ,"0):',
-    ';"0',
-)
-if len(tstr) > 0:
-    delim = tstr[0]
-else:
-    delim = ','
-if len(tstr) > 1:
-    qc = tstr[1]
-else:
-    qc = '"'
-if len(tstr) > 2:
-    numcol = int(tstr[2])
-else:
-    numcol = 0
+    # ask for CSV infos
+    tstr = scribus.valueDialog(
+        'Cvs Delimiter, Quote and Column to process',
+        'Type 1 delimiter, 1 quote character '
+        'and the column number (Clear for default ,"0):',
+        ';"0',
+    )
+    if len(tstr) > 0:
+        delim = tstr[0]
+    else:
+        delim = ','
+    if len(tstr) > 1:
+        qc = tstr[1]
+    else:
+        qc = '"'
+    if len(tstr) > 2:
+        numcol = int(tstr[2])
+    else:
+        numcol = 0
 
-# select black or white cards
-color = scribus.valueDialog(
-    'Color of the cards :',
-    'black (b) or white (w)',
-    'w',
-)
-if len(color) > 0 and 'b' == color[0]:
-    isBlack = True
-else:
-    isBlack = False
+    # select black or white cards
+    color = scribus.valueDialog(
+        'Color of the cards :',
+        'black (b) or white (w)',
+        'w',
+    )
+    if len(color) > 0 and 'b' == color[0]:
+        isBlack = True
+    else:
+        isBlack = False
 
+    # open CSV file
+    data = getCSVdata(delim=delim, qc=qc)
 
-# open CSV file
-data = getCSVdata(delim=delim, qc=qc)
-
-# Process data
-scribus.messagebarText("Processing "+str(nol)+" elements")
-scribus.progressTotal(len(data))
-for row in data:
+    # Process data
     scribus.messagebarText("Processing "+str(nol)+" elements")
-    celltext = row[numcol].strip()
-    if len(celltext) != 0:
-        createCell(
-            celltext,
-            cr,
-            cc,
-            CARDWIDTH,
-            CARDHEIGHT,
-            MARGINS[0],
-            MARGINS[2],
-            isBlack,
-        )
-        nol = nol+1
-        if cr == colstotal and cc == rowstotal:
-            #create new page
-            scribus.newPage(-1)
-            scribus.gotoPage(scribus.pageCount())
-            cr = 1
-            cc = 1
-        else:
-            if cr == colstotal:
+    scribus.progressTotal(len(data))
+    for row in data:
+        scribus.messagebarText("Processing "+str(nol)+" elements")
+        celltext = row[numcol].strip()
+        if len(celltext) != 0:
+            createCell(
+                celltext,
+                cr,
+                cc,
+                CARDWIDTH,
+                CARDHEIGHT,
+                MARGINS[0],
+                MARGINS[2],
+                isBlack,
+            )
+            nol = nol+1
+            if cr == colstotal and cc == rowstotal:
+                #create new page
+                scribus.newPage(-1)
+                scribus.gotoPage(scribus.pageCount())
                 cr = 1
-                cc = cc+1
+                cc = 1
             else:
-                cr = cr+1
-        scribus.progressSet(nol)
-scribus.messagebarText("Processed "+str(nol)+" items. ")
-scribus.progressReset()
+                if cr == colstotal:
+                    cr = 1
+                    cc = cc+1
+                else:
+                    cr = cr+1
+            scribus.progressSet(nol)
+    scribus.messagebarText("Processed "+str(nol)+" items. ")
+    scribus.progressReset()
+
+main()
