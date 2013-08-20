@@ -36,8 +36,8 @@ except ImportError, err:
 import csv
 
 # Constants
-WIDTH = 297  # page width
-HEIGHT = 210  # page height
+WIDTH = 841  # page width
+HEIGHT = 1189  # page height
 MARGINS = (10, 10, 10, 10)  # margins (left, right, top, bottom) ?
 CARDWIDTH = 69  # card width
 CARDHEIGHT = 47.5  # card height
@@ -68,17 +68,16 @@ def getCSVdata(delim, qc):
                 "Could not open file %s" % e,
             )
     else:
-        sys.exit
+        sys.exit()
 
 
 # compute the number of cards per line/row
 def get_multipl(total, width, marginl=0, marginr=0):
-    e = divmod(total - (marginl+marginr), width)
-    return e[0]
+    return divmod(total - (marginl+marginr), width)[0]
 
 
 # add the CAH logo
-def addLogo(x, y, isBlack):
+def addLogo(x, y, is_black):
     #square side
     a = 5
     #line
@@ -100,7 +99,7 @@ def addLogo(x, y, isBlack):
     titleColor = "Black"
 
     # Black cards colors
-    if isBlack:
+    if is_black:
         squareColor1 = "DarkGrey"
         lineColor1 = "DarkGrey"
         squareColor2 = "LightGrey"
@@ -139,7 +138,7 @@ def addLogo(x, y, isBlack):
 # 1-Box
 # 2-TextBox
 # 3-Logo
-def createCell(text, roffset, coffset, w, h, marginl, margint, isBlack):
+def createCell(text, roffset, coffset, w, h, marginl, margint, is_black):
     #Create textbox
     box = scribus.createRect(
         marginl+(roffset-1)*w,
@@ -167,7 +166,7 @@ def createCell(text, roffset, coffset, w, h, marginl, margint, isBlack):
     scribus.insertText(text, 0, textBox)
 
     #black card
-    if isBlack:
+    if is_black:
         scribus.setFillColor("Black", box)
         scribus.setTextColor("White", textBox)
         scribus.setLineColor("White", box)
@@ -178,7 +177,7 @@ def createCell(text, roffset, coffset, w, h, marginl, margint, isBlack):
     addLogo(
         marginl+(roffset-1)*w+wOffset,
         margint+(coffset-1)*h+hOffset,
-        isBlack
+        is_black
     )
     return
 
@@ -229,9 +228,9 @@ def main():
         'w',
     )
     if len(color) > 0 and 'b' == color[0]:
-        isBlack = True
+        is_black = True
     else:
-        isBlack = False
+        is_black = False
 
     # open CSV file
     data = getCSVdata(delim=delim, qc=qc)
@@ -251,7 +250,47 @@ def main():
                 CARDHEIGHT,
                 MARGINS[0],
                 MARGINS[2],
-                isBlack,
+                is_black,
+            )
+            nol = nol+1
+            if cr == colstotal and cc == rowstotal:
+                #create new page
+                scribus.newPage(-1)
+                scribus.gotoPage(scribus.pageCount())
+                cr = 1
+                cc = 1
+            else:
+                if cr == colstotal:
+                    cr = 1
+                    cc = cc+1
+                else:
+                    cr = cr+1
+            scribus.progressSet(nol)
+    scribus.messagebarText("Processed "+str(nol)+" items. ")
+
+    # open CSV file
+    data = getCSVdata(delim=delim, qc=qc)
+
+    # Process data
+    scribus.messagebarText("Processing "+str(nol)+" elements")
+    scribus.progressReset()
+    scribus.progressTotal(len(data))
+    nol = 0
+    cr = 1
+    cc = cc + 2
+    for row in data:
+        scribus.messagebarText("Processing "+str(nol)+" elements")
+        celltext = row[numcol].strip()
+        if len(celltext) != 0:
+            createCell(
+                celltext,
+                cr,
+                cc,
+                CARDWIDTH,
+                CARDHEIGHT,
+                MARGINS[0],
+                MARGINS[2],
+                is_black=True,
             )
             nol = nol+1
             if cr == colstotal and cc == rowstotal:
